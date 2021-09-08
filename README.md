@@ -7,4 +7,4 @@
 # Миграции
 1. Активировать миграции: flask db init
 1. Создать миграцию: flask db migrate -m "comment"
-1. Применить миграции: flask db upgrade
+1. Применить миграции: flask db upgrade# NoteApi
