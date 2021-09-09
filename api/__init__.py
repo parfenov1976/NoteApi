@@ -7,7 +7,6 @@ from flask_migrate import Migrate
 from flask_marshmallow import Marshmallow
 from flask_httpauth import HTTPBasicAuth
 
-
 app = Flask(__name__)
 app.config.from_object(Config)
 
@@ -33,3 +32,7 @@ def verify_password(username_or_token, password):
     g.user = user
     return True
 
+
+@auth.get_user_roles
+def get_user_roles(user):
+    return g.user.get_roles()

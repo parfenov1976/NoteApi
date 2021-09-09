@@ -93,12 +93,42 @@ class TestUsers(TestCase):
         Редактирование пользователя
         """
         pass
-
+# TODO: доделать
     def test_delete_user(self):
-        """
-        Удаление пользователя
-        """
-        pass
+        users_data = [
+            {
+                "username": 'alex',
+                'password': 'alex'
+            },
+            {
+                "username": 'ivan',
+                'password': '12345'
+            },
+        ]
+        for user_data in users_data:
+            user = UserModel(**user_data)
+            user.save()
+        self.create_and_auth_user()
+        res = self.client.delete('/users/1', header=self.headers)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(data[1]["username"], users_data[1]["username"])
+
+    def create_and_auth_user(self):
+        user_data = {
+            "username": 'admin',
+            'password': 'admin',
+            'role': 'admin'
+        }
+
+        user = UserModel(**user_data)
+        user.save()
+        self.user = user
+        # "login:password" --> b64 --> 'ksjadhsadfh474=+d'
+        self.headers = {
+            'Authorization': 'Basic ' + b64encode(
+                f"{user_data['username']}:{user_data['password']}".encode('ascii')).decode('utf-8')
+        }
 
     def tearDown(self):
         with self.app.app_context():
@@ -139,6 +169,7 @@ class TestNotes(TestCase):
     def test_create_node(self):
         note_data = {
             "text": 'Test note 1',
+            "private": False
         }
         res = self.client.post('/notes',
                                headers=self.headers,
@@ -146,7 +177,7 @@ class TestNotes(TestCase):
                                content_type='application/json')
         data = json.loads(res.data)
         self.assertEqual(data["text"], note_data["text"])
-        self.assertTrue(data["private"])
+        self.assertFalse(data["private"])
 
     def test_get_notes(self):
         notes_data = [
@@ -237,6 +268,50 @@ class TestNotes(TestCase):
         """
         Удаление заметки
         """
+        notes_data = [
+            {
+                "text": 'Test note 1',
+            },
+            {
+                "text": 'Test note 2',
+            },
+            {
+                "text": 'Test note 3',
+            },
+        ]
+        ids = []
+        for note_data in notes_data:
+            note = NoteModel(author_id=self.user.id, **note_data)
+            note.save()
+            ids.append(note.id)
+        res = self.client.delete('/notes/2', headers=self.headers)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data["text"], notes_data[1]["text"])
+
+    def test_delete_note_not_found(self):
+        """
+        Удаление заметки
+        """
+        notes_data = [
+            {
+                "text": 'Test note 1',
+            },
+            {
+                "text": 'Test note 2',
+            },
+            {
+                "text": 'Test note 3',
+            },
+        ]
+        ids = []
+        for note_data in notes_data:
+            note = NoteModel(author_id=self.user.id, **note_data)
+            note.save()
+            ids.append(note.id)
+        res = self.client.delete('/notes/4', headers=self.headers)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
 
     def tearDown(self):
         with self.app.app_context():

@@ -10,10 +10,14 @@ class UserModel(db.Model):
     username = db.Column(db.String(32), unique=True)
     password_hash = db.Column(db.String(128))
     notes = db.relationship('NoteModel', backref='author', lazy='dynamic')
+    # FIXME: server_default="False" --> server_default=False
+    is_staff = db.Column(db.Boolean(), default=False, server_default="False", nullable=False)
+    role = db.Column(db.String(32), nullable=False, server_default="admin", default="simple_user")
 
-    def __init__(self, username, password):
+    def __init__(self, username, password, role='simple_user'):
         self.username = username
         self.hash_password(password)
+        self.role = role
 
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)
@@ -24,6 +28,9 @@ class UserModel(db.Model):
     def generate_auth_token(self, expiration=600):
         s = Serializer(Config.SECRET_KEY, expires_in=expiration)
         return s.dumps({'id': self.id})
+
+    def get_roles(self):
+        return self.role
 
     def save(self):
         try:
