@@ -93,27 +93,32 @@ class TestUsers(TestCase):
         Редактирование пользователя
         """
         pass
-# TODO: доделать
+
     def test_delete_user(self):
-        # users_data = [
-        #     {
-        #         "username": 'alex',
-        #         'password': 'alex'
-        #     },
-        #     {
-        #         "username": 'ivan',
-        #         'password': '12345'
-        #     },
-        # ]
-        # for user_data in users_data:
-        #     user = UserModel(**user_data)
-        #     user.save()
-        # self.create_and_auth_user()
-        # res = self.client.delete('/users/1', header=self.headers)
-        # data = json.loads(res.data)
-        # self.assertEqual(res.status_code, 201)
-        # self.assertEqual(data[1]["username"], users_data[1]["username"])
-        pass
+        users_data = [
+            {
+                "username": 'alex',
+                'password': 'alex'
+            },
+            {
+                "username": 'ivan',
+                'password': '12345'
+            },
+        ]
+        for user_data in users_data:
+            user = UserModel(**user_data)
+            user.save()
+        self.create_and_auth_user()
+        res = self.client.delete('/users/1', headers=self.headers)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(data["username"], users_data[0]["username"])
+
+    def test_delete_unexisting_user(self):
+        self.create_and_auth_user()
+        res = self.client.delete('/users/10', headers=self.headers)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
 
     def create_and_auth_user(self):
         user_data = {

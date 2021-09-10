@@ -81,3 +81,18 @@ class NotesListResource(MethodResource):
         note = NoteModel(author_id=author.id, **kwargs)
         note.save()
         return note, 201
+
+
+@doc(tags=['Notes'])
+class NoteSetTagsResource(MethodResource):
+    @doc(summary="Set tags to Note")
+    @use_kwargs({"tags": fields.List(fields.Int())}, location='json')
+    @marshal_with(NoteSchema)
+    def put(self, note_id, **kwargs):
+        note = NoteModel.query.get(note_id)
+        if not note:
+            abort(404, error=f"note {note_id} not found")
+        print("note kwargs = ", kwargs)
+        ...
+        ...
+        return note, 200
