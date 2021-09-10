@@ -11,24 +11,13 @@ class UserResource(MethodResource):
     @doc(
         summary="Get user by id",
         description="Returns user",
-        produces=[
-            'application/json'
-        ],
-        params={'user_id': {'description': 'user id'}},
         responses={
-            "200": {
-
-                "description": "Return user",
-                "content":
-                    {"application/json": []}
-
-            },
             "404": {
                 "description": "User not found"
             }
-        }
+        },
     )
-    @marshal_with(UserSchema, code="User")
+    @marshal_with(UserSchema, code=200)
     def get(self, user_id):
         user = UserModel.query.get(user_id)
         if not user:
@@ -38,7 +27,9 @@ class UserResource(MethodResource):
     @auth.login_required(role="admin")
     @doc(security=[{"basicAuth": []}])
     @doc(description='Edit user by id')
-    @marshal_with(UserSchema)
+    @doc(responses={401: {"description": "You are not authorized"}})
+    @doc(responses={404: {"description": "User not found"}})
+    @marshal_with(UserSchema, code=200)
     @use_kwargs({"username": fields.Str()})
     def put(self, user_id, **kwargs):
         # parser = reqparse.RequestParser()
@@ -52,7 +43,9 @@ class UserResource(MethodResource):
     @auth.login_required(role="admin")
     @doc(security=[{"basicAuth": []}])
     @doc(description='Delete user by id')
-    @marshal_with(UserSchema)
+    @doc(responses={401: {"description": "You are not authorized"}})
+    @doc(responses={404: {"description": "User not found"}})
+    @marshal_with(UserSchema, code=201)
     def delete(self, user_id):
         user = UserModel.query.get(user_id)
         if not user:
@@ -64,16 +57,14 @@ class UserResource(MethodResource):
 @doc(tags=['Users'])
 class UsersListResource(MethodResource):
     @doc(description='Get user list')
-    @marshal_with(UserSchema(many=True))
+    @marshal_with(UserSchema(many=True), code=200)
     def get(self):
         users = UserModel.query.all()
         return users, 200
 
-    @auth.login_required(role="admin")
-    @doc(security=[{"basicAuth": []}])
     @use_kwargs(UserRequestSchema, location='json')
     @doc(description='Post new user')
-    @marshal_with(UserSchema)
+    @marshal_with(UserSchema, code=201)
     def post(self, **kwargs):
         # parser = reqparse.RequestParser()
         # parser.add_argument("username", required=True)

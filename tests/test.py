@@ -319,6 +319,23 @@ class TestNotes(TestCase):
         data = json.loads(res.data)
         self.assertEqual(res.status_code, 404)
 
+    # def test_filter_notes
+    #     notes_data = [
+    #         {
+    #             "text": 'Test note 1',
+    #         },
+    #         {
+    #             "text": 'Test note 2',
+    #         },
+    #         {
+    #             "text": 'Test note 3',
+    #         },
+    #     ]
+    #     ids = []
+    #     for note_data in notes_data:
+    #         note = NoteModel(author_id=self.user.id, **note_data)
+    #         note.save()
+
     def tearDown(self):
         with self.app.app_context():
             # drop all tables

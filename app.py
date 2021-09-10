@@ -1,5 +1,5 @@
 from api import api, app, docs
-from api.resources.note import NoteResource, NotesListResource, NoteSetTagsResource
+from api.resources.note import NoteResource, NotesListResource, NoteSetTagsResource, NoteFilterResource
 from api.resources.user import UserResource, UsersListResource
 from api.resources.auth import TokenResource
 from api.resources.tag import TagsResource, TagsListResource
@@ -32,7 +32,11 @@ api.add_resource(TagsListResource,
                  '/tags'
                  )
 api.add_resource(NoteSetTagsResource,
-                 '/notes/<int:note_id>/tags/<int:tag_id>'
+                 '/notes/<int:note_id>/tags'
+                 )
+# FIXME: проверить URL
+api.add_resource(NoteFilterResource,
+                 '/notes/public/filter?username=<un>'
                  )
 
 docs.register(UserResource)
@@ -42,5 +46,6 @@ docs.register(NotesListResource)
 docs.register(TagsResource)
 docs.register(TagsListResource)
 docs.register(NoteSetTagsResource)
+docs.register(NoteFilterResource)
 if __name__ == '__main__':
     app.run(debug=Config.DEBUG, port=Config.PORT)
