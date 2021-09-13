@@ -23,11 +23,9 @@ class NoteResource(MethodResource):
             abort(403, error=f"Forbidden")
         return note, 200
 
-    # TODO: Check return >kwargs.get("private") OR kwargs["private"]
     @auth.login_required
     @doc(description='Edit note by id')
     @marshal_with(NoteSchema)
-    # TODO: Check kwargs
     @use_kwargs(NoteRequestSchema, location='json')
     def put(self, note_id, **kwargs):
         author = g.user
@@ -48,13 +46,16 @@ class NoteResource(MethodResource):
     @auth.login_required
     @doc(security=[{"basicAuth": []}])
     @doc(description='Delete note by id')
-    @doc(responeses={404: {"description": "Note not found"}})
-    @marshal_with(NoteSchema)
+    @doc(responses={404: {"description": "Note not found"}})
+    @doc(responses={403: {"description": "You are not authorized to delete notes of other users"}})
+    @marshal_with(NoteSchema, code=200)
     def delete(self, note_id):
+        author = g.user
         note = NoteModel.query.get(note_id)
         if not note:
             abort(404, error=f"Note with id:{note_id} not found")
-        # FIXME: добавить удаление только своих заметок
+        if note.author != author:
+            abort(403, error=f"Forbidden")
         note.delete()
         return note, 200
 
@@ -65,7 +66,6 @@ class NotesListResource(MethodResource):
     @auth.login_required
     @doc(description='Get notes list')
     @marshal_with(NoteSchema(many=True))
-    # TODO: check
     def get(self):
         author = g.user
         notes = NoteModel.query.filter_by(author_id=author.id)
@@ -89,24 +89,82 @@ class NotesListResource(MethodResource):
 
 @doc(tags=['Notes'])
 class NoteSetTagsResource(MethodResource):
+    @auth.login_required
+    @doc(security=[{"basicAuth": []}])
+    @doc(description="Return note after setting tags")
     @doc(summary="Set tags to Note")
+    @doc(responses={200: {"description": "Tags were set"}})
+    @doc(responses={404: {"description": "Note not found"}})
+    @doc(responses={403: {"description": "You are not authorized to tags notes of other users"}})
     @use_kwargs({"tags": fields.List(fields.Int())}, location='json')
     @marshal_with(NoteSchema, code=200)
     def put(self, note_id, **kwargs):
+        author = g.user
         note = NoteModel.query.get(note_id)
+        if not note:
+            abort(404, error=f"Note with id={note_id} not found")
+        if note.author != author:
+            abort(403, error=f"Forbidden")
         for tag_id in kwargs["tags"]:
             tag = TagModel.query.get(tag_id)
             note.tags.append(tag)
         note.save()
         return note, 200
 
+    @auth.login_required
+    @doc(security=[{"basicAuth": []}])
+    @doc(description="Returns note after deleting tags")
+    @doc(summary="Delete tags from note by tags id")
+    @doc(responses={200: {"description": "Tags was delete"}})
+    @doc(responses={400: {"description": "List of tag ids not match to note tags"}})
+    @doc(responses={404: {"description": "Note not found"}})
+    @doc(responses={403: {"description": "You are not authorized to untags notes of other users"}})
+    @use_kwargs({"tags": fields.List(fields.Int())}, location='json')
+    @marshal_with(NoteSchema, code=200)
+    def delete(self, note_id, **kwargs):
+        author = g.user
+        note = NoteModel.query.get(note_id)
+        if not note:
+            abort(404, error=f"Note with id={note_id} not found")
+        if not set(kwargs['tags']) <= set([el.id for el in note.tags]):
+            abort(400, error=f"List of tag ids not match to note tags")
+        if note.author != author:
+            abort(403, error=f"Forbidden")
+        for tag_id in kwargs["tags"]:
+            tag = TagModel.query.get(tag_id)
+            note.tags.remove(tag)
+        note.save()
+        return note, 200
 
-# FIXME
-@doc(tags=['Notes'])
+
+@doc(tags=['NotesFilter'])
 class NoteFilterResource(MethodResource):
-    # GET /notes/public/filter?username=<un>
+    # GET: /notes/filter?tag=<tag_name>
+    @auth.login_required
+    @doc(security=[{"basicAuth": []}])
+    @doc(description="Returns list notes by tag name")
+    @doc(summary="Get list notes by tag name")
+    @doc(responses={200: {"description": "List with notes filtered by tag name"}})
+    @doc(responses={400: {"description": "Tag name missing"}})
+    @use_kwargs({"tag": fields.Str()}, location='query')
     @marshal_with(NoteSchema(many=True), code=200)
-    @use_kwargs({"username": fields.Str()}, location='query')
     def get(self, **kwargs):
-        notes = NoteModel.query.filter(UserModel.username == kwargs["username"])
+        author = g.user
+        try:
+            notes = NoteModel.query.filter(NoteModel.tags.any(name=kwargs["tag"]), NoteModel.author_id == author.id)
+            return notes, 200
+        except KeyError:
+            abort(400, error="Tag name missing")
+
+
+@doc(tags=['NotesFilter'])
+class NoteFilterByUsernameResource(MethodResource):
+    # GET: /notes/public/filter?username=<un>
+    # TODO доделать - список публичных заметок по имени пользователя
+    @use_kwargs({"username": fields.Str()}, location='query')
+    @marshal_with(NoteSchema(many=True), code=200)
+    def get(self, **kwargs):
+        notes = NoteModel.query.filter(NoteModel.author.has(username=kwargs["username"]))
         return notes, 200
+
+# TODO доделать - список публичных заметок

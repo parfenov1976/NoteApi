@@ -1,5 +1,6 @@
 from api import api, app, docs
-from api.resources.note import NoteResource, NotesListResource, NoteSetTagsResource, NoteFilterResource
+from api.resources.note import NoteResource, NotesListResource, NoteSetTagsResource, \
+    NoteFilterResource, NoteFilterByUsernameResource
 from api.resources.user import UserResource, UsersListResource
 from api.resources.auth import TokenResource
 from api.resources.tag import TagsResource, TagsListResource
@@ -12,12 +13,15 @@ from config import Config
 # Update --> PUT
 # Delete --> DELETE
 api.add_resource(UsersListResource,
-                 '/users')  # GET, POST
+                 '/users',
+                 )  # GET, POST
 api.add_resource(UserResource,
-                 '/users/<int:user_id>')  # GET, PUT, DELETE
+                 '/users/<int:user_id>',
+                 )  # GET, PUT, DELETE
 
 api.add_resource(TokenResource,
-                 '/auth/token')  # GET
+                 '/auth/token',
+                 )  # GET
 
 api.add_resource(NotesListResource,
                  '/notes',  # GET, POST
@@ -26,17 +30,19 @@ api.add_resource(NoteResource,
                  '/notes/<int:note_id>',  # GET, PUT, DELETE
                  )
 api.add_resource(TagsResource,
-                 '/tags/<int:tag_id>'
+                 '/tags/<int:tag_id>',
                  )
 api.add_resource(TagsListResource,
-                 '/tags'
+                 '/tags',
                  )
 api.add_resource(NoteSetTagsResource,
-                 '/notes/<int:note_id>/tags'
+                 '/notes/<int:note_id>/tags',
                  )
-# FIXME: проверить URL
 api.add_resource(NoteFilterResource,
-                 '/notes/public/filter?username=<un>'
+                 '/notes/filter',
+                 )
+api.add_resource(NoteFilterByUsernameResource,
+                 '/notes/public/filter',  # GET
                  )
 
 docs.register(UserResource)
@@ -47,5 +53,6 @@ docs.register(TagsResource)
 docs.register(TagsListResource)
 docs.register(NoteSetTagsResource)
 docs.register(NoteFilterResource)
+docs.register(NoteFilterByUsernameResource)
 if __name__ == '__main__':
     app.run(debug=Config.DEBUG, port=Config.PORT)
