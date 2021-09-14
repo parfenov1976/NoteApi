@@ -191,13 +191,14 @@ class NoteFilterByUsernameResource(MethodResource):
         notes = NoteModel.query.filter(NoteModel.author.has(username=kwargs["username"]), NoteModel.private == False)
         return notes, 200
 
-# TODO доделать - список публичных заметок
+
 @doc(tags=['NotesFilter'])
 class NoteFilterPublicResource(MethodResource):
     @doc(description="Returns list of public notes")
     @doc(summary="Get list of public notes")
     @doc(responses={200: {"description": "List with public notes"}})
     @marshal_with(NoteSchema(many=True), code=200)
+    # GET: /notes/public
     def get(self):
         notes = NoteModel.query.filter_by(private=False)
         return notes, 200
