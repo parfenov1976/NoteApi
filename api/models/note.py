@@ -22,3 +22,6 @@ class NoteModel(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+
+    def __repr__(self):
+        return f"Note {self.text}, {self.private}"

@@ -117,7 +117,6 @@ class TestUsers(TestCase):
     def test_delete_unexisting_user(self):
         self.create_and_auth_user()
         res = self.client.delete('/users/10', headers=self.headers)
-        data = json.loads(res.data)
         self.assertEqual(res.status_code, 404)
 
     def create_and_auth_user(self):
@@ -316,7 +315,6 @@ class TestNotes(TestCase):
             note.save()
             ids.append(note.id)
         res = self.client.delete('/notes/4', headers=self.headers)
-        data = json.loads(res.data)
         self.assertEqual(res.status_code, 404)
 
     # def test_filter_notes

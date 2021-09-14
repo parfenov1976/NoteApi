@@ -18,6 +18,12 @@ ma = Marshmallow(app)
 auth = HTTPBasicAuth()
 docs = FlaskApiSpec(app)
 
+logging.basicConfig(filename='record.log',
+                   level=logging.INFO,
+                   format=f'%(asctime)s %(levelname)s %(name)s : %(message)s')
+app.logger.setLevel(logging.INFO)
+logging.getLogger('werkzeug').setLevel(logging.WARNING)
+
 
 @auth.verify_password
 def verify_password(username_or_token, password):

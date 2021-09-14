@@ -6,6 +6,7 @@ from api.schemas.note import note_schema, notes_schema, NoteSchema, NoteRequestS
 from flask_apispec.views import MethodResource
 from flask_apispec import marshal_with, use_kwargs, doc
 from webargs import fields
+import pdb
 
 
 @doc(security=[{"basicAuth": []}])
