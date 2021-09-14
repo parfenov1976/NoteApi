@@ -1,6 +1,6 @@
 from api import api, app, docs
 from api.resources.note import NoteResource, NotesListResource, NoteSetTagsResource, \
-    NoteFilterResource, NoteFilterByUsernameResource
+    NoteFilterResource, NoteFilterByUsernameResource, NoteFilterPublicResource
 from api.resources.user import UserResource, UsersListResource
 from api.resources.auth import TokenResource
 from api.resources.tag import TagsResource, TagsListResource
@@ -44,6 +44,9 @@ api.add_resource(NoteFilterResource,
 api.add_resource(NoteFilterByUsernameResource,
                  '/notes/public/filter',  # GET
                  )
+api.add_resource(NoteFilterPublicResource,
+                 '/notes/public'
+                 )
 
 docs.register(UserResource)
 docs.register(UsersListResource)
@@ -54,5 +57,7 @@ docs.register(TagsListResource)
 docs.register(NoteSetTagsResource)
 docs.register(NoteFilterResource)
 docs.register(NoteFilterByUsernameResource)
+docs.register(NoteFilterPublicResource)
+
 if __name__ == '__main__':
     app.run(debug=Config.DEBUG, port=Config.PORT)

@@ -13,8 +13,12 @@ import pdb
 @doc(tags=['Notes'])
 class NoteResource(MethodResource):
     @auth.login_required
-    @doc(description='Get note by id')
-    @marshal_with(NoteSchema)
+    @doc(description='Returns note by id')
+    @doc(summary="Get note by id")
+    @doc(responses={200: {"description": "Note by id"}})
+    @doc(responses={404: {"description": "Note not found"}})
+    @doc(responses={403: {"description": "You are not authorized to get notes of other users"}})
+    @marshal_with(NoteSchema, code=200)
     def get(self, note_id):
         author = g.user
         note = NoteModel.query.get(note_id)
@@ -26,7 +30,11 @@ class NoteResource(MethodResource):
 
     @auth.login_required
     @doc(description='Edit note by id')
-    @marshal_with(NoteSchema)
+    @doc(summary="Edit note by id")
+    @doc(responses={200: {"description": "Note is edited"}})
+    @doc(responses={404: {"description": "Note not found"}})
+    @doc(responses={403: {"description": "You are not authorized to edit notes of other users"}})
+    @marshal_with(NoteSchema, code=200)
     @use_kwargs(NoteRequestSchema, location='json')
     def put(self, note_id, **kwargs):
         author = g.user
@@ -47,6 +55,7 @@ class NoteResource(MethodResource):
     @auth.login_required
     @doc(security=[{"basicAuth": []}])
     @doc(description='Delete note by id')
+    @doc(summary="Delete note by id")
     @doc(responses={404: {"description": "Note not found"}})
     @doc(responses={403: {"description": "You are not authorized to delete notes of other users"}})
     @marshal_with(NoteSchema, code=200)
@@ -65,8 +74,10 @@ class NoteResource(MethodResource):
 @doc(tags=['Notes'])
 class NotesListResource(MethodResource):
     @auth.login_required
-    @doc(description='Get notes list')
-    @marshal_with(NoteSchema(many=True))
+    @doc(description='Returns notes list')
+    @doc(summary="Get notes list")
+    @doc(responses={200: {"description": "Notes list"}})
+    @marshal_with(NoteSchema(many=True), code=200)
     def get(self):
         author = g.user
         notes = NoteModel.query.filter_by(author_id=author.id)
@@ -76,7 +87,9 @@ class NotesListResource(MethodResource):
     @doc(security=[{"basicAuth": []}])
     @use_kwargs(NoteRequestSchema, location='json')
     @doc(description='Post new note')
-    @marshal_with(NoteSchema)
+    @doc(summary="Post new note")
+    @doc(responses={201: {"description": "Note posted"}})
+    @marshal_with(NoteSchema, code=201)
     def post(self, **kwargs):
         author = g.user
         # parser = reqparse.RequestParser()
@@ -161,11 +174,30 @@ class NoteFilterResource(MethodResource):
 @doc(tags=['NotesFilter'])
 class NoteFilterByUsernameResource(MethodResource):
     # GET: /notes/public/filter?username=<un>
-    # TODO доделать - список публичных заметок по имени пользователя
+    @doc(description="Returns list of user's public notes")
+    @doc(summary="Get list of public notes by username")
+    @doc(responses={200: {"description": "List with public notes filtered by username"}})
+    @doc(responses={400: {"description": "Username missing"}})
+    @doc(responses={404: {"description": "User not found"}})
     @use_kwargs({"username": fields.Str()}, location='query')
     @marshal_with(NoteSchema(many=True), code=200)
     def get(self, **kwargs):
-        notes = NoteModel.query.filter(NoteModel.author.has(username=kwargs["username"]))
+        try:
+            user = UserModel.query.filter_by(username=kwargs["username"]).all()
+            if not user:
+                abort(404, error=f'User with username={kwargs["username"]} not found')
+        except KeyError:
+            abort(400, error="Username missing")
+        notes = NoteModel.query.filter(NoteModel.author.has(username=kwargs["username"]), NoteModel.private == False)
         return notes, 200
 
 # TODO доделать - список публичных заметок
+@doc(tags=['NotesFilter'])
+class NoteFilterPublicResource(MethodResource):
+    @doc(description="Returns list of public notes")
+    @doc(summary="Get list of public notes")
+    @doc(responses={200: {"description": "List with public notes"}})
+    @marshal_with(NoteSchema(many=True), code=200)
+    def get(self):
+        notes = NoteModel.query.filter_by(private=False)
+        return notes, 200
