@@ -88,11 +88,11 @@ class NotesListResource(MethodResource):
         author = g.user
         notes = NoteModel.get_all_for_user(author)
         if kwargs.get('tag') is not None:
-            notes = notes.filter(NoteModel.tags.any(name=kwargs.get('tag')))
+            notes = notes.filter(NoteModel.tags.any(name=kwargs['tag']))
         if kwargs.get('private') is not None:
-            notes = notes.filter_by(private=kwargs.get('private'))
+            notes = notes.filter_by(private=kwargs['private'])
         if kwargs.get('username') is not None:
-            notes = notes.filter(NoteModel.author.has(username=kwargs.get('username')))
+            notes = notes.filter(NoteModel.author.has(username=kwargs['username']))
         return notes, 200
 
     @auth.login_required
