@@ -1,10 +1,11 @@
 from api import api, app, docs
 from api.resources.note import NoteResource, NotesListResource, NoteSetTagsResource, \
-    NoteFilterResource, NoteFilterByUsernameResource, NoteFilterPublicResource
+    NoteFilterResource, NoteFilterByUsernameResource, NoteFilterPublicResource, NotesRestoreResource
 from api.resources.user import UserResource, UsersListResource
 from api.resources.auth import TokenResource
 from api.resources.tag import TagsResource, TagsListResource
 from config import Config
+from api import Message, mail
 
 # CRUD
 
@@ -47,6 +48,9 @@ api.add_resource(NoteFilterByUsernameResource,
 api.add_resource(NoteFilterPublicResource,
                  '/notes/public'
                  )
+api.add_resource(NotesRestoreResource,
+                 '/notes/<int:note_id>/restore',
+                 )
 
 docs.register(UserResource)
 docs.register(UsersListResource)
@@ -58,6 +62,14 @@ docs.register(NoteSetTagsResource)
 docs.register(NoteFilterResource)
 docs.register(NoteFilterByUsernameResource)
 docs.register(NoteFilterPublicResource)
+docs.register(NotesRestoreResource)
+
+msg = Message('test subject', sender=Config.ADMINS[0], recipients=Config.ADMINS)
+msg.body = 'Server started'
+msg.html = 'Server started'
+
 
 if __name__ == '__main__':
+    # with app.app_context(): # для отправки почтовых сообщения снять комент
+    #     mail.send(msg)
     app.run(debug=Config.DEBUG, port=Config.PORT)

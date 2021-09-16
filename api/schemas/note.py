@@ -16,20 +16,36 @@ class NoteSchema(ma.SQLAlchemySchema):
     private = ma.auto_field()
     author = ma.Nested(UserSchema())
     tags = ma.Nested(TagSchema(many=True))
+    archive = ma.auto_field()
 
     _links = ma.Hyperlinks({
         'self': ma.URLFor('noteresource', values=dict(note_id="<id>")),
         'collection': ma.URLFor('noteslistresource')
     })
 
+
 note_schema = NoteSchema()
 notes_schema = NoteSchema(many=True)
 
 
 # Десериализация запроса(request)
-class NoteRequestSchema(ma.SQLAlchemySchema):
+class NoteCreateSchema(ma.SQLAlchemySchema):
     class Meta:
         model = NoteModel
 
     text = ma.Str()
     private = ma.Bool()
+
+
+class NoteEditSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = NoteModel
+
+    text = ma.Str(required=False)
+    private = ma.Bool(required=False)
+
+
+class NoteFilterSchema(ma.SQLAlchemySchema):
+    private = ma.Bool(required=False)
+    tag = ma.Str(required=False)
+    archive = ma.Bool(required=False)

@@ -2,10 +2,11 @@ from api import auth, abort, g, Resource, reqparse
 from api.models.note import NoteModel
 from api.models.user import UserModel
 from api.models.tag import TagModel
-from api.schemas.note import note_schema, notes_schema, NoteSchema, NoteRequestSchema
+from api.schemas.note import note_schema, notes_schema, NoteSchema, NoteCreateSchema, NoteEditSchema, NoteFilterSchema
 from flask_apispec.views import MethodResource
 from flask_apispec import marshal_with, use_kwargs, doc
 from webargs import fields
+from sqlalchemy.orm.exc import NoResultFound
 import pdb
 
 
@@ -21,12 +22,11 @@ class NoteResource(MethodResource):
     @marshal_with(NoteSchema, code=200)
     def get(self, note_id):
         author = g.user
-        note = NoteModel.query.get(note_id)
-        if not note:
+        try:
+            note = NoteModel.get_all_for_user(author).filter_by(id=note_id).one()
+            return note, 200
+        except NoResultFound:
             abort(404, error=f"Note with id={note_id} not found")
-        if note.author != author:
-            abort(403, error=f"Forbidden")
-        return note, 200
 
     @auth.login_required
     @doc(description='Edit note by id')
@@ -34,8 +34,8 @@ class NoteResource(MethodResource):
     @doc(responses={200: {"description": "Note is edited"}})
     @doc(responses={404: {"description": "Note not found"}})
     @doc(responses={403: {"description": "You are not authorized to edit notes of other users"}})
+    @use_kwargs(NoteEditSchema, location='json')
     @marshal_with(NoteSchema, code=200)
-    @use_kwargs(NoteRequestSchema, location='json')
     def put(self, note_id, **kwargs):
         author = g.user
         # parser = reqparse.RequestParser()
@@ -47,17 +47,19 @@ class NoteResource(MethodResource):
             abort(404, error=f"note {note_id} not found")
         if note.author != author:
             abort(403, error=f"Forbidden")
-        note.text = kwargs["text"]
-        note.private = kwargs["private"] or note.private
+        if kwargs.get("text") is not None:
+            note.text = kwargs.get("text")
+        if kwargs.get("private") is not None:
+            note.private = kwargs.get("private")
         note.save()
         return note, 200
 
     @auth.login_required
     @doc(security=[{"basicAuth": []}])
-    @doc(description='Delete note by id')
-    @doc(summary="Delete note by id")
+    @doc(description='Move note by id to archive')
+    @doc(summary="Move note by id to archive")
     @doc(responses={404: {"description": "Note not found"}})
-    @doc(responses={403: {"description": "You are not authorized to delete notes of other users"}})
+    @doc(responses={403: {"description": "You are not authorized to archive notes of other users"}})
     @marshal_with(NoteSchema, code=200)
     def delete(self, note_id):
         author = g.user
@@ -80,12 +82,12 @@ class NotesListResource(MethodResource):
     @marshal_with(NoteSchema(many=True), code=200)
     def get(self):
         author = g.user
-        notes = NoteModel.query.filter_by(author_id=author.id)
+        notes = NoteModel.get_all_for_user(author)
         return notes, 200
 
     @auth.login_required
     @doc(security=[{"basicAuth": []}])
-    @use_kwargs(NoteRequestSchema, location='json')
+    @use_kwargs(NoteCreateSchema, location='json')
     @doc(description='Post new note')
     @doc(summary="Post new note")
     @doc(responses={201: {"description": "Note posted"}})
@@ -99,6 +101,23 @@ class NotesListResource(MethodResource):
         note = NoteModel(author_id=author.id, **kwargs)
         note.save()
         return note, 201
+
+
+@doc(tags=['Notes'])
+class NotesRestoreResource(MethodResource):
+    @doc(description='Restore notes from archive')
+    @doc(summary="Restore notes from archive")
+    @doc(responses={200: {"description": "Note restored"}})
+    @doc(responses={304: {"description": "Not modified"}})
+    @marshal_with(NoteSchema, code=200)
+    def put(self, note_id):
+        note = NoteModel.query.get(note_id)
+        if not note:
+            abort(404, error=f"Note with id={note_id} not found")
+        if not note.archive:
+            return {}, 304
+        note.restore()
+        return note, 200
 
 
 @doc(tags=['Notes'])
@@ -150,7 +169,7 @@ class NoteSetTagsResource(MethodResource):
         note.save()
         return note, 200
 
-
+# TODO переделать фильтры
 @doc(tags=['NotesFilter'])
 class NoteFilterResource(MethodResource):
     # GET: /notes/filter?tag=<tag_name>
@@ -188,7 +207,7 @@ class NoteFilterByUsernameResource(MethodResource):
                 abort(404, error=f'User with username={kwargs["username"]} not found')
         except KeyError:
             abort(400, error="Username missing")
-        notes = NoteModel.query.filter(NoteModel.author.has(username=kwargs["username"]), NoteModel.private == False)
+        notes = NoteModel.query.filter(NoteModel.author.has(username=kwargs["username"]), not NoteModel.private)
         return notes, 200
 
 

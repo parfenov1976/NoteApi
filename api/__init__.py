@@ -7,6 +7,7 @@ from flask_migrate import Migrate
 from flask_marshmallow import Marshmallow
 from flask_httpauth import HTTPBasicAuth
 from flask_apispec.extension import FlaskApiSpec
+from flask_mail import Mail, Message
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -17,6 +18,7 @@ migrate = Migrate(app, db)
 ma = Marshmallow(app)
 auth = HTTPBasicAuth()
 docs = FlaskApiSpec(app)
+mail = Mail(app)
 
 logging.basicConfig(filename='record.log',
                    level=logging.INFO,

@@ -31,3 +31,13 @@ class Config:
     )
     APISPEC_SWAGGER_URL = '/swagger'  # URI API Doc JSON
     APISPEC_SWAGGER_UI_URL =  '/swagger-ui/'  # URI UI of API Doc
+
+    MAIL_SERVER = 'smtp.googlemail.com'
+    MAIL_PORT = 465
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = True
+    MAIL_USERNAME = 'parfenov1976alex@gmail.com' # своя почта
+    MAIL_PASSWORD = 'AleX367RuS'
+
+    # administrator list
+    ADMINS = ['parfenov1976alex@gmail.com']
