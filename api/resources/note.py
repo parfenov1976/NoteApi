@@ -34,6 +34,7 @@ class NoteResource(MethodResource):
     @doc(responses={200: {"description": "Note is edited"}})
     @doc(responses={404: {"description": "Note not found"}})
     @doc(responses={403: {"description": "You are not authorized to edit notes of other users"}})
+    @doc(responses={304: {"description": "Not modified"}})
     @use_kwargs(NoteEditSchema, location='json')
     @marshal_with(NoteSchema, code=200)
     def put(self, note_id, **kwargs):
@@ -50,6 +51,8 @@ class NoteResource(MethodResource):
         if kwargs.get("text") is not None:
             note.text = kwargs.get("text")
         if kwargs.get("private") is not None:
+            if kwargs.get("private") == note.private:
+                return {}, 304
             note.private = kwargs.get("private")
         note.save()
         return note, 200
@@ -76,13 +79,20 @@ class NoteResource(MethodResource):
 @doc(tags=['Notes'])
 class NotesListResource(MethodResource):
     @auth.login_required
-    @doc(description='Returns notes list')
-    @doc(summary="Get notes list")
+    @doc(description='Returns notes list by filters')
+    @doc(summary="Get notes list by filters")
     @doc(responses={200: {"description": "Notes list"}})
     @marshal_with(NoteSchema(many=True), code=200)
-    def get(self):
+    @use_kwargs(NoteFilterSchema, location='query')
+    def get(self, **kwargs):
         author = g.user
         notes = NoteModel.get_all_for_user(author)
+        if kwargs.get('tag') is not None:
+            notes = notes.filter(NoteModel.tags.any(name=kwargs.get('tag')))
+        if kwargs.get('private') is not None:
+            notes = notes.filter_by(private=kwargs.get('private'))
+        if kwargs.get('username') is not None:
+            notes = notes.filter(NoteModel.author.has(username=kwargs.get('username')))
         return notes, 200
 
     @auth.login_required
@@ -169,55 +179,57 @@ class NoteSetTagsResource(MethodResource):
         note.save()
         return note, 200
 
-# TODO переделать фильтры
-@doc(tags=['NotesFilter'])
-class NoteFilterResource(MethodResource):
-    # GET: /notes/filter?tag=<tag_name>
-    @auth.login_required
-    @doc(security=[{"basicAuth": []}])
-    @doc(description="Returns list notes by tag name")
-    @doc(summary="Get list notes by tag name")
-    @doc(responses={200: {"description": "List with notes filtered by tag name"}})
-    @doc(responses={400: {"description": "Tag name missing"}})
-    @use_kwargs({"tag": fields.Str()}, location='query')
-    @marshal_with(NoteSchema(many=True), code=200)
-    def get(self, **kwargs):
-        author = g.user
-        try:
-            notes = NoteModel.query.filter(NoteModel.tags.any(name=kwargs["tag"]), NoteModel.author_id == author.id)
-            return notes, 200
-        except KeyError:
-            abort(400, error="Tag name missing")
-
-
-@doc(tags=['NotesFilter'])
-class NoteFilterByUsernameResource(MethodResource):
-    # GET: /notes/public/filter?username=<un>
-    @doc(description="Returns list of user's public notes")
-    @doc(summary="Get list of public notes by username")
-    @doc(responses={200: {"description": "List with public notes filtered by username"}})
-    @doc(responses={400: {"description": "Username missing"}})
-    @doc(responses={404: {"description": "User not found"}})
-    @use_kwargs({"username": fields.Str()}, location='query')
-    @marshal_with(NoteSchema(many=True), code=200)
-    def get(self, **kwargs):
-        try:
-            user = UserModel.query.filter_by(username=kwargs["username"]).all()
-            if not user:
-                abort(404, error=f'User with username={kwargs["username"]} not found')
-        except KeyError:
-            abort(400, error="Username missing")
-        notes = NoteModel.query.filter(NoteModel.author.has(username=kwargs["username"]), not NoteModel.private)
-        return notes, 200
-
-
-@doc(tags=['NotesFilter'])
-class NoteFilterPublicResource(MethodResource):
-    @doc(description="Returns list of public notes")
-    @doc(summary="Get list of public notes")
-    @doc(responses={200: {"description": "List with public notes"}})
-    @marshal_with(NoteSchema(many=True), code=200)
-    # GET: /notes/public
-    def get(self):
-        notes = NoteModel.query.filter_by(private=False)
-        return notes, 200
+# @doc(tags=['NotesFilter'])
+# class NoteFilterResource(MethodResource):
+#     # GET: /notes/filter?tag=<tag_name> преобразовать к указаному ниже
+#     # GET: /notes?tag=<tag_name>
+#     @auth.login_required
+#     @doc(security=[{"basicAuth": []}])
+#     @doc(description="Returns list notes by tag name")
+#     @doc(summary="Get list notes by tag name")
+#     @doc(responses={200: {"description": "List with notes filtered by tag name"}})
+#     @doc(responses={400: {"description": "Tag name missing"}})
+#     @use_kwargs({"tag": fields.Str()}, location='query')
+#     @marshal_with(NoteSchema(many=True), code=200)
+#     def get(self, **kwargs):
+#         author = g.user
+#         try:
+#             notes = NoteModel.query.filter(NoteModel.tags.any(name=kwargs["tag"]), NoteModel.author_id == author.id)
+#             return notes, 200
+#         except KeyError:
+#             abort(400, error="Tag name missing")
+#
+#
+# @doc(tags=['NotesFilter'])
+# class NoteFilterByUsernameResource(MethodResource):
+#     # GET: /notes/public/filter?username=<un>  преобразовать к указаному ниже
+#     # GET: /notes?public=True&username=<un>&tag=<tag_name> по одному из фильтров или по их комбинации
+#     # GET: /notes?public=True&tag=<tag_name> - текущая разработка
+#     @doc(description="Returns list of user's public notes")
+#     @doc(summary="Get list of public notes by username")
+#     @doc(responses={200: {"description": "List with public notes filtered by username"}})
+#     @doc(responses={400: {"description": "Username missing"}})
+#     @doc(responses={404: {"description": "User not found"}})
+#     @use_kwargs({"username": fields.Str()}, location='query')
+#     @marshal_with(NoteSchema(many=True), code=200)
+#     def get(self, **kwargs):
+#         try:
+#             user = UserModel.query.filter_by(username=kwargs["username"]).all()
+#             if not user:
+#                 abort(404, error=f'User with username={kwargs["username"]} not found')
+#         except KeyError:
+#             abort(400, error="Username missing")
+#         notes = NoteModel.query.filter(NoteModel.author.has(username=kwargs["username"]), NoteModel.private == False)
+#         return notes, 200
+#
+#
+# @doc(tags=['NotesFilter'])
+# class NoteFilterPublicResource(MethodResource):
+#     @doc(description="Returns list of public notes")
+#     @doc(summary="Get list of public notes")
+#     @doc(responses={200: {"description": "List with public notes"}})
+#     @marshal_with(NoteSchema(many=True), code=200)
+#     # GET: /notes/public
+#     def get(self):
+#         notes = NoteModel.query.filter_by(private=False)
+#         return notes, 200

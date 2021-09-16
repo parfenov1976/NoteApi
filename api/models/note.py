@@ -14,12 +14,12 @@ class NoteModel(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey(UserModel.id))
     text = db.Column(db.String(255), unique=False, nullable=False)
     private = db.Column(db.Boolean(), default=True, server_default=expression.true(), nullable=False)
-    tags = db.relationship(TagModel, secondary=tags, lazy='subquery', backref=db.backref('notes', lazy=True))
+    tags = db.relationship('TagModel', secondary=tags, lazy='subquery', backref=db.backref('notes', lazy=True))
     archive = db.Column(db.Boolean(), default=False, server_default=expression.false(), nullable=False)
 
     @classmethod
     def get_all_for_user(cls, author):
-        return cls.query.filter((NoteModel.author.has(id=author.id)) | (not cls.private)).filter_by(archive=False)
+        return cls.query.filter((cls.author.has(id=author.id)) | (cls.private == False)).filter_by(archive=False)
 
     def save(self):
         db.session.add(self)

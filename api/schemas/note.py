@@ -45,7 +45,9 @@ class NoteEditSchema(ma.SQLAlchemySchema):
     private = ma.Bool(required=False)
 
 
-class NoteFilterSchema(ma.SQLAlchemySchema):
+class NoteFilterSchema(ma.SQLAlchemySchema):  # class Meta не указан т.к. данная схема не взаимодействует
+    # с моделью, она взаимодествует с запросом и извлекает указанные поля из него
     private = ma.Bool(required=False)
     tag = ma.Str(required=False)
-    archive = ma.Bool(required=False)
+    username = ma.Str(required=False)
+    # archive = ma.Bool(required=False)
