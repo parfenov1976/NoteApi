@@ -1,6 +1,6 @@
 from api import api, app, docs
 from api.resources.note import NoteResource, NotesListResource, NoteSetTagsResource, NotesRestoreResource
-from api.resources.user import UserResource, UsersListResource
+from api.resources.user import UserResource, UsersListResource, UsersImageResource
 from api.resources.auth import TokenResource
 from api.resources.tag import TagsResource, TagsListResource
 from api.resources.file import UploadPictureResource
@@ -63,6 +63,7 @@ api.add_resource(NoteSetTagsResource,
 
 docs.register(UserResource)
 docs.register(UsersListResource)
+docs.register(UsersImageResource)
 docs.register(TagsResource)
 docs.register(TagsListResource)
 docs.register(NoteResource)

@@ -92,14 +92,17 @@ class UsersListResource(MethodResource):
         return user, 201
 
 
-# @doc(tags=['Users'])
-# @api.resource('/users/image')
-# class UsersImageResource(MethodResource):
-#     @auth.login_required
-#     @doc(security=[{"basicAuth": []}])
-#     @doc(description='Add image to user')
-#     @doc(summary="Add image to user")
-#     @doc(responses={200: {"description": "Image added"}})
-#     def put(self, user_id, url):
-#         user = UserModel.query.get(user_id)
-#         user.image = url
+@doc(tags=['Users'])
+@api.resource('/users/<int:user_id>/image/<int:image_id>')
+class UsersImageResource(MethodResource):
+    @auth.login_required
+    @doc(security=[{"basicAuth": []}])
+    @doc(description='Add image to user')
+    @doc(summary="Add image to user")
+    @doc(responses={200: {"description": "Image added"}})
+    @marshal_with(UserSchema, code=200)
+    def put(self, user_id, image_id):
+        user = UserModel.query.get(user_id)
+        user.image_id = image_id
+        user.save()
+        return user, 200
