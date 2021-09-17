@@ -1,15 +1,17 @@
 import logging
 from config import Config
 from flask import Flask, g
-from flask_restful import Api, Resource, abort, reqparse
+from flask_restful import Api, Resource, abort, reqparse, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_marshmallow import Marshmallow
 from flask_httpauth import HTTPBasicAuth
 from flask_apispec.extension import FlaskApiSpec
 from flask_mail import Mail, Message
+from flask_babel import Babel
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=Config.UPLOAD_FOLDER)
+
 app.config.from_object(Config)
 
 api = Api(app)
@@ -19,12 +21,18 @@ ma = Marshmallow(app)
 auth = HTTPBasicAuth()
 docs = FlaskApiSpec(app)
 mail = Mail(app)
+babel = Babel(app)
 
 logging.basicConfig(filename='record.log',
-                   level=logging.INFO,
-                   format=f'%(asctime)s %(levelname)s %(name)s : %(message)s')
+                    level=logging.INFO,
+                    format=f'%(asctime)s %(levelname)s %(name)s : %(message)s')
 app.logger.setLevel(logging.INFO)
 logging.getLogger('werkzeug').setLevel(logging.WARNING)
+
+
+@babel.localeselector
+def get_locale():
+    return request.accept_languages.best_match(app.config['LANGUAGES'])
 
 
 @auth.verify_password

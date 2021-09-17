@@ -13,6 +13,7 @@ class UserModel(db.Model):
     notes = db.relationship('NoteModel', backref='author', lazy='dynamic')
     is_staff = db.Column(db.Boolean(), default=False, server_default=expression.false(), nullable=False)
     role = db.Column(db.String(32), nullable=False, server_default="admin", default="simple_user")
+    # image = db.relationship('ImageModel') сделать связь один к одному
 
     def __init__(self, username, password, role='simple_user'):
         self.username = username

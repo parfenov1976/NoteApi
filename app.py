@@ -3,8 +3,17 @@ from api.resources.note import NoteResource, NotesListResource, NoteSetTagsResou
 from api.resources.user import UserResource, UsersListResource
 from api.resources.auth import TokenResource
 from api.resources.tag import TagsResource, TagsListResource
+from api.resources.file import UploadPictureResource
 from config import Config
 from api import Message, mail
+from flask import send_from_directory
+
+
+@app.route('/uploads/<path:filename>')
+def download_file(filename):
+    # FIXME добавить проверку наличия директории и создание директории если ее нет
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+
 
 # CRUD
 
@@ -58,6 +67,7 @@ docs.register(NoteResource)
 docs.register(NotesListResource)
 docs.register(NotesRestoreResource)
 docs.register(NoteSetTagsResource)
+docs.register(UploadPictureResource)
 # docs.register(NoteFilterResource)
 # docs.register(NoteFilterByUsernameResource)
 # docs.register(NoteFilterPublicResource)
@@ -65,7 +75,6 @@ docs.register(NoteSetTagsResource)
 msg = Message('test subject', sender=Config.ADMINS[0], recipients=Config.ADMINS)
 msg.body = 'Server started'
 msg.html = 'Server started'
-
 
 if __name__ == '__main__':
     # with app.app_context(): # для отправки почтовых сообщения снять комент

@@ -1,4 +1,4 @@
-from api import Resource, abort, reqparse, auth, logging
+from api import Resource, abort, reqparse, auth, logging, api
 from api.models.user import UserModel
 from api.schemas.user import user_schema, users_schema, UserSchema, UserRequestSchema
 from flask_apispec.views import MethodResource
@@ -90,3 +90,16 @@ class UsersListResource(MethodResource):
             abort(400, error=f"User with username:{user.username} is already exist")
         logging.info("User create")
         return user, 201
+
+
+# @doc(tags=['Users'])
+# @api.resource('/users/image')
+# class UsersImageResource(MethodResource):
+#     @auth.login_required
+#     @doc(security=[{"basicAuth": []}])
+#     @doc(description='Add image to user')
+#     @doc(summary="Add image to user")
+#     @doc(responses={200: {"description": "Image added"}})
+#     def put(self, user_id, url):
+#         user = UserModel.query.get(user_id)
+#         user.image = url
