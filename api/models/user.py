@@ -4,6 +4,7 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import expression
+from api.models.image import ImageModel
 
 
 class UserModel(db.Model):
@@ -13,7 +14,7 @@ class UserModel(db.Model):
     notes = db.relationship('NoteModel', backref='author', lazy='dynamic')
     is_staff = db.Column(db.Boolean(), default=False, server_default=expression.false(), nullable=False)
     role = db.Column(db.String(32), nullable=False, server_default="admin", default="simple_user")
-    # image = db.relationship('ImageModel') сделать связь один к одному
+    image_id = db.Column(db.Integer, db.ForeignKey(ImageModel.id))
 
     def __init__(self, username, password, role='simple_user'):
         self.username = username
