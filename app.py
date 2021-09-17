@@ -7,11 +7,13 @@ from api.resources.file import UploadPictureResource
 from config import Config
 from api import Message, mail
 from flask import send_from_directory
+import os
 
 
 @app.route('/uploads/<path:filename>')
 def download_file(filename):
-    # FIXME добавить проверку наличия директории и создание директории если ее нет
+    if not os.path.isdir("upload"):
+        os.mkdir("upload")
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
 
