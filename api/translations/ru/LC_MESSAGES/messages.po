@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-09-17 15:10+0300\n"
-"PO-Revision-Date: 2021-09-17 14:53+0300\n"
+"POT-Creation-Date: 2021-09-17 19:07+0300\n"
+"PO-Revision-Date: 2021-09-17 19:08+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ru\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -20,11 +20,7 @@ msgstr ""
 "Generated-By: Babel 2.9.1\n"
 
 #: api/resources/note.py:31
-msgid "Note with id="
-msgstr "Заметка с id="
-
-#: api/resources/note.py:31
-msgid " not found"
-msgstr " не найдена"
-
+#, python-format
+msgid "Note with id=%(note_id)s not found"
+msgstr "Заметка с id=%(note_id)s не найдена"
 

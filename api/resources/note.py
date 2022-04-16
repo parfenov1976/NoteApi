@@ -7,7 +7,7 @@ from flask_apispec.views import MethodResource
 from flask_apispec import marshal_with, use_kwargs, doc
 from webargs import fields
 from sqlalchemy.orm.exc import NoResultFound
-from flask_babel import _
+from flask_babel import gettext, _
 import pdb
 
 
@@ -28,7 +28,7 @@ class NoteResource(MethodResource):
             return note, 200
         except NoResultFound:
             # abort(404, error=f"Note with id={note_id} not found")
-            abort(404, error=_("Note with id=") + str(note_id) + _(" not found"))
+            abort(404, error=_("Note with id=%(note_id)s not found", note_id=note_id))
 
     @auth.login_required
     @doc(description='Edit note by id')
